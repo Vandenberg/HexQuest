@@ -2,8 +2,9 @@ import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { Text } from "@react-three/drei";
 
-const Hexagon = ({ x, y, z, size, type, row, col }) => {
+const Hexagon = ({ x, y, z, size, type, row, col, players = [] }) => {
   const meshRef = useRef();
+  const objectsRef = useRef([]);
 
   useEffect(() => {
     const geometry = new THREE.CylinderGeometry(size, size, 1, 6);
@@ -36,14 +37,22 @@ const Hexagon = ({ x, y, z, size, type, row, col }) => {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.add(edges);
-    meshRef.current.add(mesh);
+
+    if (meshRef.current) {
+      meshRef.current.add(mesh);
+
+      // Store references for cleanup
+      objectsRef.current.push(mesh, edges);
+      objectsRef.current.push(geometry, edgeGeometry, edgeMaterial, material);
+    }
   }, [x, y, z, size, type]);
 
   return (
     <group ref={meshRef}>
       <Text
-        position={[x, y + size * 1.5, z]}
-        fontSize={size / 2}
+        position={[x, 2, z - size * 0.6]}
+        fontSize={size / 5}
+        rotation={[-Math.PI / 2, 0, 0]}
         color="black"
         anchorX="center"
         anchorY="middle"

@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import Hexagon from "./Hexagon";
 import terrainData from "../data/terrainData";
+import CharacterOverlay from "./CharacterOverlay";
+import CharacterPositionTracker from "./CharacterPositionTracker";
 
 const HexagonalGrid = ({ width, height, size }) => {
   const hexagons = [];
   const hexWidth = Math.sqrt(3) * size;
   const hexHeight = 2 * size;
   const vertDist = hexHeight * 0.75;
+  const [characterPositions, setCharacterPositions] = useState({});
 
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
@@ -32,37 +35,49 @@ const HexagonalGrid = ({ width, height, size }) => {
       );
     }
   }
+  //   // Add to HexagonalGrid.js before return statement
+  //   useEffect(() => {
+  //     console.log("Character data:", window.characterData);
+  //     console.log("Character positions:", characterPositions);
+  //   }, [characterPositions]);
 
   return (
-    <Canvas
-      camera={{
-        position: [(width * hexWidth) / 2, 75, height * vertDist + 45],
-        fov: 45,
-      }}
-      style={{ width: "100%", height: "50vh" }}
-    >
-      <ambientLight intensity={0.5} />
-      <directionalLight
-        castShadow
-        position={[5, 5, 5]}
-        intensity={1}
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-far={50}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
-      />
-      <OrbitControls
-        target={[(width * hexWidth) / 2, 0, (height * vertDist) / 2]}
-        maxPolarAngle={Math.PI / 2}
-        minPolarAngle={Math.PI / 4}
-        enableRotate={false}
-        enableZoom={false}
-      />
-      {hexagons}
-    </Canvas>
+    <div style={{ position: "relative", width: "100%", height: "50vh" }}>
+      <Canvas
+        camera={{
+          position: [(width * hexWidth) / 2, 75, height * vertDist + 45],
+          fov: 45,
+        }}
+      >
+        <ambientLight intensity={0.5} />
+        <directionalLight
+          castShadow
+          position={[5, 5, 5]}
+          intensity={1}
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+        />
+        <OrbitControls
+          target={[(width * hexWidth) / 2, 0, (height * vertDist) / 2]}
+          maxPolarAngle={Math.PI / 2}
+          minPolarAngle={Math.PI / 4}
+        />
+        {hexagons}
+        <CharacterPositionTracker
+          characters={
+            window.characterData || [
+              // Fallback test data
+              { character_id: "test1", name: "Test Character" },
+            ]
+          }
+          onPositionsUpdate={setCharacterPositions}
+          hexSize={size}
+        />
+      </Canvas>
+
+      {/* Character overlay positioned absolutely over the canvas */}
+      <CharacterOverlay positions={characterPositions} />
+    </div>
   );
 };
 
