@@ -1,6 +1,6 @@
 const locations = [
-  { x: 2, y: 2, type: "mill" },
-  { x: 5, y: 5, type: "castle" },
+  { x: 5, y: 3, type: "mill", name: "Last Light" },
+  { x: 2, y: 3, type: "castle", name: "Faldor's Holdfast" },
 ];
 
 export default locations;

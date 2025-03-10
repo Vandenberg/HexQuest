@@ -3,10 +3,13 @@ import React, { createContext, useState, useEffect } from "react";
 export const CharacterLocationContext = createContext({
   characterLocations: [],
   updateCharacterLocation: () => {},
+  gridConfig: { width: 7, height: 8 },
 });
 
 export const CharacterLocationProvider = ({ children }) => {
   const [characterLocations, setCharacterLocations] = useState([]);
+  // Define grid configuration here to match HexagonalGrid
+  const gridConfig = { width: 7, height: 8 };
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -49,6 +52,7 @@ export const CharacterLocationProvider = ({ children }) => {
       value={{
         characterLocations,
         updateCharacterLocation,
+        gridConfig,
       }}
     >
       {children}

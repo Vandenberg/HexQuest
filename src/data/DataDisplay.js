@@ -15,8 +15,10 @@ const DataList = ({ data }) => {
     return characterLocations.find((loc) => loc.characterId === characterId);
   };
 
-  // Generate grid coordinates based on grid size
-  const generateCoordinates = (rows = 10, cols = 10) => {
+  // Generate grid coordinates based on actual grid size
+  const generateCoordinates = () => {
+    const rows = 8; // Match the height in HexagonalGrid
+    const cols = 7; // Match the width in HexagonalGrid
     const coords = [];
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {

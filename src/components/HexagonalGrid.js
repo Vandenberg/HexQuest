@@ -5,6 +5,7 @@ import Hexagon from "./Hexagon";
 import terrainData from "../data/terrainData";
 import CharacterOverlay from "./CharacterOverlay";
 import CharacterPositionTracker from "./CharacterPositionTracker";
+import LocationLabels from "./LocationLabels"; // Import the new component
 
 const HexagonalGrid = ({ width, height, size }) => {
   const hexagons = [];
@@ -35,14 +36,9 @@ const HexagonalGrid = ({ width, height, size }) => {
       );
     }
   }
-  //   // Add to HexagonalGrid.js before return statement
-  //   useEffect(() => {
-  //     console.log("Character data:", window.characterData);
-  //     console.log("Character positions:", characterPositions);
-  //   }, [characterPositions]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "50vh" }}>
+    <div style={{ position: "relative", width: "100%", height: "80vh" }}>
       <Canvas
         camera={{
           position: [(width * hexWidth) / 2, 75, height * vertDist + 45],
@@ -63,6 +59,7 @@ const HexagonalGrid = ({ width, height, size }) => {
           minPolarAngle={Math.PI / 4}
         />
         {hexagons}
+        <LocationLabels hexSize={size} />
         <CharacterPositionTracker
           characters={
             window.characterData || [
@@ -71,7 +68,7 @@ const HexagonalGrid = ({ width, height, size }) => {
             ]
           }
           onPositionsUpdate={setCharacterPositions}
-          hexSize={size}
+          hexSize={size} // Pass the hexSize explicitly
         />
       </Canvas>
 

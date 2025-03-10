@@ -33,7 +33,7 @@ const CharacterOverlay = ({ positions }) => {
               color: "white",
               padding: "4px 8px",
               borderRadius: "4px",
-              fontSize: "12px",
+              fontSize: "24px",
               pointerEvents: "auto", // Make this element interactive
               cursor: "pointer",
               zIndex: 1000,

@@ -2,9 +2,12 @@ import * as THREE from 'three';
 
 // Function to convert hex grid coordinates to 3D world position
 export const hexToWorld = (row, col, hexSize = 1) => {
-  // Calculate hex grid positions (using flat-topped hexagon layout)
-  const x = (col * 1.5) * hexSize;
-  const z = (row * Math.sqrt(3) + (col % 2) * Math.sqrt(3) / 2) * hexSize;
+  // Calculate hex grid positions with proper scaling using hexSize
+  const hexWidth = Math.sqrt(3) * hexSize;
+  const vertDist = 2 * hexSize * 0.75;
+  
+  const x = col * hexWidth + (row % 2) * (hexWidth / 2);
+  const z = row * vertDist;
   const y = 0; // Base height
   
   return new THREE.Vector3(x, y, z);
@@ -22,26 +25,29 @@ export const worldToScreen = (worldPos, camera, size) => {
 };
 
 // Function for handling character position updates on camera or window changes
-export const updateCharacterPositions = (characters, characterLocations, camera, size) => {
+export const updateCharacterPositions = (characters, characterLocations, camera, size, hexSize = 1) => {
   const positions = {};
   
   characterLocations.forEach(location => {
     const { characterId, row, col } = location;
-    const worldPos = hexToWorld(row, col);
-    // Add a small Y offset to position labels above the hexagons
-    worldPos.y += 1;
+    // Use hexSize for world position calculation
+    const worldPos = hexToWorld(row, col, hexSize);  
+    worldPos.y += hexSize; // Scale the y-offset with hexSize for better visibility
     
     const screenPos = worldToScreen(worldPos, camera, size);
     
-    // Find character info
-    const characterInfo = characters.find(c => c.character_id === characterId);
+    // Find character info - match by ID
+    const characterInfo = characters.find(c => 
+      c.character_id === characterId || 
+      c.id === characterId || 
+      c.characterId === characterId
+    );
     
     if (characterInfo) {
       positions[characterId] = {
         ...screenPos,
         name: characterInfo.name || `Character ${characterId}`
       };
-      console.log("Character positions:", positions);
     }
   });
   

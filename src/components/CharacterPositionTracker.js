@@ -29,11 +29,14 @@ const CharacterPositionTracker = ({
       return;
     }
 
+    // Pass hexSize explicitly and ensure it's a number
+    const actualHexSize = typeof hexSize === "number" ? hexSize : 1;
     const positions = updateCharacterPositions(
       charactersToUse,
       characterLocations,
       camera,
-      { width: size.width, height: size.height }
+      { width: size.width, height: size.height },
+      actualHexSize
     );
 
     if (Object.keys(positions).length > 0) {

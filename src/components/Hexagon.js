@@ -51,7 +51,7 @@ const Hexagon = ({ x, y, z, size, type, row, col, players = [] }) => {
     <group ref={meshRef}>
       <Text
         position={[x, 2, z - size * 0.6]}
-        fontSize={size / 5}
+        fontSize={size / 3}
         rotation={[-Math.PI / 2, 0, 0]}
         color="black"
         anchorX="center"
