@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import * as THREE from "three";
 import Hexagon from "./Hexagon";
 import terrainData from "../data/terrainData";
 import CharacterOverlay from "./CharacterOverlay";
 import CharacterPositionTracker from "./CharacterPositionTracker";
-import LocationLabels from "./LocationLabels"; // Import the new component
+import LocationLabels from "./LocationLabels";
+import preloader from "../helpers/ThreeJSPreloader";
 
 const HexagonalGrid = ({ width, height, size }) => {
   const hexagons = [];
@@ -13,7 +15,9 @@ const HexagonalGrid = ({ width, height, size }) => {
   const hexHeight = 2 * size;
   const vertDist = hexHeight * 0.75;
   const [characterPositions, setCharacterPositions] = useState({});
+  const canvasRef = useRef(null);
 
+  // Create hexagons based on terrain data
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
       const x = col * hexWidth + (row % 2) * (hexWidth / 2);
@@ -22,6 +26,8 @@ const HexagonalGrid = ({ width, height, size }) => {
         (terrain) => terrain.x === col && terrain.y === row
       );
       const type = terrainObject ? terrainObject.type : "none";
+
+      // Pass the preloader to Hexagon component if it needs textures
       hexagons.push(
         <Hexagon
           key={`${row}-${col}`}
@@ -32,6 +38,7 @@ const HexagonalGrid = ({ width, height, size }) => {
           type={type}
           row={row}
           col={col}
+          preloader={preloader}
         />
       );
     }
@@ -40,9 +47,16 @@ const HexagonalGrid = ({ width, height, size }) => {
   return (
     <div style={{ position: "relative", width: "100%", height: "80vh" }}>
       <Canvas
+        ref={canvasRef}
         camera={{
           position: [(width * hexWidth) / 2, 75, height * vertDist + 45],
           fov: 45,
+        }}
+        onCreated={({ gl }) => {
+          // Configure renderer settings when canvas is created
+          gl.shadowMap.enabled = true;
+          gl.shadowMap.type = THREE.PCFSoftShadowMap;
+          console.log("Three.js canvas initialized");
         }}
       >
         <ambientLight intensity={0.5} />
