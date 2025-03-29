@@ -1,67 +1,163 @@
-import React, { useContext, useState } from "react";
+import React, { useState, useContext } from "react";
+import { TextField, Button, Flex, Box } from "@radix-ui/themes";
+import { ChevronUpIcon, ChevronDownIcon } from "@radix-ui/react-icons";
 import { CharacterLocationContext } from "../contexts/CharacterLocationContext";
 
-const CharacterLocationSelector = () => {
-  const { characters, allCoordinates, updateCharacterLocation } = useContext(
-    CharacterLocationContext
-  );
-  const [selectedCharacter, setSelectedCharacter] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState({ row: 0, col: 0 });
+// Custom NumberInput component with up/down buttons
+const NumberInput = ({
+  value,
+  onChange,
+  min = 0,
+  max = 100,
+  step = 1,
+  width = "50px",
+}) => {
+  const handleIncrement = () => {
+    const newValue = Math.min(max, value + step);
+    onChange(newValue);
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (selectedCharacter) {
-      updateCharacterLocation(
-        selectedCharacter,
-        selectedLocation.row,
-        selectedLocation.col
-      );
+  const handleDecrement = () => {
+    const newValue = Math.max(min, value - step);
+    onChange(newValue);
+  };
+
+  const handleChange = (e) => {
+    const newValue = parseInt(e.target.value, 10);
+    if (!isNaN(newValue) && newValue >= min && newValue <= max) {
+      onChange(newValue);
     }
   };
 
   return (
-    <div className="character-location-form">
-      <h3>Assign Character Location</h3>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Select Character:</label>
-          <select
-            value={selectedCharacter}
-            onChange={(e) => setSelectedCharacter(e.target.value)}
-            required
-          >
-            <option value="">-- Select Character --</option>
-            {characters.map((character) => (
-              <option key={character.id} value={character.id}>
-                {character.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Select Location:</label>
-          <select
-            value={`${selectedLocation.row},${selectedLocation.col}`}
-            onChange={(e) => {
-              const [row, col] = e.target.value.split(",").map(Number);
-              setSelectedLocation({ row, col });
+    <Flex gap="0" align="center">
+      <TextField.Root
+        value={value}
+        onChange={handleChange}
+        type="number"
+        min={min}
+        max={max}
+        step={step}
+        style={{ width }}
+      />
+      <Box>
+        <Flex direction="column">
+          <Button
+            variant="soft"
+            onClick={handleIncrement}
+            style={{
+              padding: "2px",
+              borderRadius: "0 4px 0 0",
+              lineHeight: 1,
+              height: "18px",
             }}
-            required
           >
-            {allCoordinates.map((coord) => (
-              <option
-                key={`${coord.row},${coord.col}`}
-                value={`${coord.row},${coord.col}`}
-              >
-                [{coord.row}, {coord.col}]
-              </option>
-            ))}
-          </select>
-        </div>
+            <ChevronUpIcon width="14" height="14" />
+          </Button>
+          <Button
+            variant="soft"
+            onClick={handleDecrement}
+            style={{
+              padding: "2px",
+              borderRadius: "0 0 4px 0",
+              lineHeight: 1,
+              height: "18px",
+            }}
+          >
+            <ChevronDownIcon width="14" height="14" />
+          </Button>
+        </Flex>
+      </Box>
+    </Flex>
+  );
+};
 
-        <button type="submit">Assign Location</button>
-      </form>
+const CharacterLocationSelector = ({ character }) => {
+  const { characterLocations, updateCharacterLocation } = useContext(
+    CharacterLocationContext
+  );
+
+  const [selectedLocation, setSelectedLocation] = useState({
+    row: 0,
+    col: 0,
+  });
+
+  // Find location for a specific character ID
+  const getCharacterLocation = (characterId) => {
+    return characterLocations.find((loc) => loc.characterId === characterId);
+  };
+
+  const currentLocation = getCharacterLocation(character.character_id);
+
+  const handleRemove = () => {
+    updateCharacterLocation(character.character_id, null, null);
+  };
+
+  const handleRowChange = (newRow) => {
+    const newLocation = { ...selectedLocation, row: newRow };
+    setSelectedLocation(newLocation);
+  };
+
+  const handleColChange = (newCol) => {
+    const newLocation = { ...selectedLocation, col: newCol };
+    setSelectedLocation(newLocation);
+  };
+
+  const handleSetLocation = () => {
+    updateCharacterLocation(
+      character.character_id,
+      selectedLocation.row,
+      selectedLocation.col
+    );
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      {currentLocation ? (
+        <>
+          <span>
+            [{currentLocation.row}, {currentLocation.col}]
+          </span>
+          <Button
+            variant="soft"
+            color="red"
+            onClick={handleRemove}
+            style={{ marginLeft: "8px" }}
+          >
+            ✕
+          </Button>
+        </>
+      ) : (
+        <Flex direction="row" gap="2" align="center">
+          <Box>
+            <Flex gap="1" align="center">
+              <span>R:</span>
+              <NumberInput
+                value={selectedLocation.row}
+                onChange={handleRowChange}
+                min={0}
+                max={7}
+                width="40px"
+              />
+            </Flex>
+          </Box>
+          <Box>
+            <Flex gap="1" align="center">
+              <span>C:</span>
+              <NumberInput
+                value={selectedLocation.col}
+                onChange={handleColChange}
+                min={0}
+                max={6}
+                width="40px"
+              />
+            </Flex>
+          </Box>
+          <Button size="1" variant="soft" onClick={handleSetLocation}>
+            Set
+          </Button>
+        </Flex>
+      )}
     </div>
   );
 };

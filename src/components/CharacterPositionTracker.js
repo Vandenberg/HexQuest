@@ -40,7 +40,7 @@ const CharacterPositionTracker = ({
     );
 
     if (Object.keys(positions).length > 0) {
-      console.log("Updating positions:", positions);
+      //   console.log("Updating positions:", positions);
       onPositionsUpdate(positions);
     }
   });
