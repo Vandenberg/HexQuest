@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import HexagonalGrid from "../components/HexagonalGrid";
 import {
   Box,
@@ -9,56 +9,92 @@ import {
   Spinner,
   Text,
   Progress,
+  Button,
 } from "@radix-ui/themes";
 import preloader from "../helpers/ThreeJSPreloader";
+import { useCharacterData } from "../contexts/CharacterDataContext";
+import { CharacterLocationContext } from "../contexts/CharacterLocationContext";
 
 const World = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [gridReady, setGridReady] = useState(false);
+  const { characters, loading: charactersLoading } = useCharacterData();
+  const { characterLocations } = useContext(CharacterLocationContext);
+
+  // Debug log to see if data is available in the World component
+  useEffect(() => {
+    console.log("World component data:", {
+      characters: characters?.length || 0,
+      characterLocations: characterLocations?.length || 0,
+    });
+  }, [characters, characterLocations]);
+
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useCallback(
+    (function () {
+      let mounted = true;
+      return {
+        current: () => mounted,
+        unmount: () => {
+          mounted = false;
+        },
+      };
+    })(),
+    []
+  );
 
   // Use ThreeJSPreloader to preload textures and other assets
   useEffect(() => {
-    // Define texture URLs to preload (currently we don't have textures but this would be the place to add them)
+    // Define texture URLs to preload
     const textureUrls = [
-      // Add texture URLs here when you start using textures
-      // For example: "/textures/grass.jpg", "/textures/water.jpg", etc.
+      "/textures/dark_forest.jpg",
+      "/textures/field.jpg",
+      "/textures/forest.jpg",
+      "/textures/grassland.jpg",
+      "/textures/grid.png",
+      "/textures/hills.jpg",
+      "/textures/mountains.jpg",
+      "/textures/swamp.jpg",
+      "/textures/water.jpg",
     ];
 
     // Set up progress callback
     preloader.onProgress = (progress) => {
-      setLoadingProgress(progress * 100);
+      if (isMounted.current()) {
+        setLoadingProgress(progress * 100);
+      }
     };
 
     const preloadAssets = async () => {
       try {
-        // Even if we don't have textures yet, this establishes the loading infrastructure
+        // Preload textures that will actually be used
         if (textureUrls.length > 0) {
           await preloader.preloadTextures(textureUrls);
-        } else {
-          // If no textures to preload, simulate some loading time for the Three.js environment
-          await new Promise((resolve) => setTimeout(resolve, 800));
         }
 
-        // Set grid as ready and remove loading state
-        setGridReady(true);
-        setTimeout(() => setIsLoading(false), 200);
-      } catch (error) {
-        console.error("Error preloading assets:", error);
-        // Even if there's an error, we should still show the grid after a delay
-        setTimeout(() => {
+        // Set grid as ready and remove loading state immediately
+        if (isMounted.current()) {
           setGridReady(true);
           setIsLoading(false);
-        }, 1000);
+        }
+      } catch (error) {
+        console.error("Error preloading assets:", error);
+        // Even if there's an error, show the grid
+        if (isMounted.current()) {
+          setGridReady(true);
+          setIsLoading(false);
+        }
       }
     };
 
     preloadAssets();
 
+    // Cleanup function
     return () => {
-      // Cleanup if needed
+      isMounted.unmount();
     };
-  }, []);
+  }, [isMounted]);
 
   return (
     <Container className="world-page" size="3">
@@ -89,4 +125,4 @@ const World = () => {
   );
 };
 
-export default World;
+export default React.memo(World);

@@ -1,12 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
-import {
-  CaretDownIcon,
-  ChevronRightIcon,
-  HamburgerMenuIcon,
-  CheckIcon,
-  DotFilledIcon,
-} from "@radix-ui/react-icons";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import React, { createContext, useState, useEffect, useRef } from "react";
 
 export const CharacterLocationContext = createContext({
   characterLocations: [],
@@ -18,39 +10,107 @@ export const CharacterLocationProvider = ({ children }) => {
   const [characterLocations, setCharacterLocations] = useState([]);
   // Define grid configuration here to match HexagonalGrid
   const gridConfig = { width: 7, height: 8 };
-
+  // Reference to track initial load
+  const hasInitialLoad = useRef(false);
   // Load from localStorage on mount
   useEffect(() => {
+    // Try to load character locations from localStorage
     const storedLocations = localStorage.getItem("characterLocations");
+    console.log(
+      "Loading character locations from localStorage:",
+      storedLocations
+    );
+
     if (storedLocations) {
       try {
-        setCharacterLocations(JSON.parse(storedLocations));
+        const parsedLocations = JSON.parse(storedLocations);
+        console.log("Parsed character locations:", parsedLocations);
+
+        // Validate the parsed data is an array and has the expected structure
+        if (Array.isArray(parsedLocations) && parsedLocations.length > 0) {
+          // Ensure all entries have characterId in string format for consistency
+          const normalizedLocations = parsedLocations.map((loc) => ({
+            ...loc,
+            characterId: String(loc.characterId),
+          }));
+
+          setCharacterLocations(normalizedLocations);
+          console.log(
+            "Character locations successfully loaded:",
+            normalizedLocations
+          );
+        } else {
+          console.warn(
+            "Stored locations is not a valid array or is empty:",
+            parsedLocations
+          );
+        }
       } catch (error) {
         console.error("Failed to parse character locations:", error);
       }
+    } else {
+      console.log("No character locations found in localStorage");
+
+      // Initialize with dummy data for testing if needed
+      // setCharacterLocations([
+      //   { characterId: "1", row: 2, col: 3 },
+      //   { characterId: "2", row: 4, col: 1 }
+      // ]);
     }
   }, []);
 
   // Save to localStorage whenever locations change
   useEffect(() => {
-    localStorage.setItem(
-      "characterLocations",
-      JSON.stringify(characterLocations)
-    );
-    console.log(JSON.stringify(characterLocations));
-  }, [characterLocations]);
+    // Avoid saving when the component first mounts to prevent double-saving
+    if (!hasInitialLoad.current) {
+      hasInitialLoad.current = true;
+      return;
+    }
 
+    // Only save if there are locations to save
+    if (characterLocations && characterLocations.length > 0) {
+      try {
+        const locationsJson = JSON.stringify(characterLocations);
+        localStorage.setItem("characterLocations", locationsJson);
+        console.log(
+          "Saved character locations to localStorage:",
+          locationsJson
+        );
+      } catch (error) {
+        console.error("Failed to save character locations:", error);
+      }
+    } else {
+      console.log("No character locations to save to localStorage");
+    }
+  }, [characterLocations]);
   const updateCharacterLocation = (characterId, row, col) => {
+    console.log(
+      `Updating character location: id=${characterId}, row=${row}, col=${col}`
+    );
+
+    // Ensure characterId is consistent format (as a string)
+    const idToUse = String(characterId);
+
     if (row === null && col === null) {
       // Remove character location
-      setCharacterLocations((prev) =>
-        prev.filter((loc) => loc.characterId !== characterId)
-      );
+      setCharacterLocations((prev) => {
+        // Check for both possible ID formats
+        const filtered = prev.filter(
+          (loc) => String(loc.characterId) !== idToUse
+        );
+        console.log("After removal:", filtered);
+        return filtered;
+      });
     } else {
       // Update or add character location
       setCharacterLocations((prev) => {
-        const filtered = prev.filter((loc) => loc.characterId !== characterId);
-        return [...filtered, { characterId, row, col }];
+        // Filter using string comparison to avoid type mismatches
+        const filtered = prev.filter(
+          (loc) => String(loc.characterId) !== idToUse
+        );
+        const newLocations = [...filtered, { characterId: idToUse, row, col }];
+        console.log("Updated locations:", newLocations);
+        return newLocations;
       });
     }
   };
@@ -64,108 +124,6 @@ export const CharacterLocationProvider = ({ children }) => {
       }}
     >
       {children}
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          <button className="IconButton" aria-label="Customise options">
-            <HamburgerMenuIcon />
-          </button>
-        </DropdownMenu.Trigger>
-
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
-            <DropdownMenu.Item className="DropdownMenuItem"></DropdownMenu.Item>
-            <DropdownMenu.Item className="DropdownMenuItem">
-              New Window <div className="RightSlot">⌘+N</div>
-            </DropdownMenu.Item>
-            <DropdownMenu.Item className="DropdownMenuItem" disabled>
-              New Private Window <div className="RightSlot">⇧+⌘+N</div>
-            </DropdownMenu.Item>
-            <DropdownMenu.Sub>
-              <DropdownMenu.SubTrigger className="DropdownMenuSubTrigger">
-                More Tools
-                <div className="RightSlot">
-                  <ChevronRightIcon />
-                </div>
-              </DropdownMenu.SubTrigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.SubContent
-                  className="DropdownMenuSubContent"
-                  sideOffset={2}
-                  alignOffset={-5}
-                >
-                  <DropdownMenu.Item className="DropdownMenuItem">
-                    Save Page As… <div className="RightSlot">⌘+S</div>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item className="DropdownMenuItem">
-                    Create Shortcut…
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item className="DropdownMenuItem">
-                    Name Window…
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Separator className="DropdownMenu.Separator" />
-                  <DropdownMenu.Item className="DropdownMenuItem">
-                    Developer Tools
-                  </DropdownMenu.Item>
-                </DropdownMenu.SubContent>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Sub>
-
-            <DropdownMenu.Separator className="DropdownMenuSeparator" />
-
-            <DropdownMenu.CheckboxItem
-              className="DropdownMenuCheckboxItem"
-              //   checked={bookmarksChecked}
-              //   onCheckedChange={setBookmarksChecked}
-            >
-              <DropdownMenu.ItemIndicator className="DropdownMenuItemIndicator">
-                <CheckIcon />
-              </DropdownMenu.ItemIndicator>
-              Show Bookmarks <div className="RightSlot">⌘+B</div>
-            </DropdownMenu.CheckboxItem>
-            <DropdownMenu.CheckboxItem
-              className="DropdownMenuCheckboxItem"
-              //   checked={urlsChecked}
-              //   onCheckedChange={setUrlsChecked}
-            >
-              <DropdownMenu.ItemIndicator className="DropdownMenuItemIndicator">
-                <CheckIcon />
-              </DropdownMenu.ItemIndicator>
-              Show Full URLs
-            </DropdownMenu.CheckboxItem>
-
-            <DropdownMenu.Separator className="DropdownMenuSeparator" />
-
-            <DropdownMenu.Label className="DropdownMenuLabel">
-              People
-            </DropdownMenu.Label>
-            <DropdownMenu.RadioGroup
-            //   value={person}
-            //   onValueChange={setPerson}
-            >
-              <DropdownMenu.RadioItem
-                className="DropdownMenuRadioItem"
-                value="pedro"
-              >
-                <DropdownMenu.ItemIndicator className="DropdownMenuItemIndicator">
-                  <DotFilledIcon />
-                </DropdownMenu.ItemIndicator>
-                Pedro Duarte
-              </DropdownMenu.RadioItem>
-              <DropdownMenu.RadioItem
-                className="DropdownMenuRadioItem"
-                value="colm"
-              >
-                <DropdownMenu.ItemIndicator className="DropdownMenuItemIndicator">
-                  <DotFilledIcon />
-                </DropdownMenu.ItemIndicator>
-                Colm Tuite
-              </DropdownMenu.RadioItem>
-            </DropdownMenu.RadioGroup>
-
-            <DropdownMenu.Arrow className="DropdownMenuArrow" />
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
     </CharacterLocationContext.Provider>
   );
 };

@@ -81,10 +81,21 @@ const CharacterLocationSelector = ({ character }) => {
     row: 0,
     col: 0,
   });
-
   // Find location for a specific character ID
   const getCharacterLocation = (characterId) => {
-    return characterLocations.find((loc) => loc.characterId === characterId);
+    // Log for debugging
+    console.log(
+      `Looking for character ID: ${characterId} in locations:`,
+      characterLocations
+    );
+    return characterLocations.find((loc) => {
+      // Check for both possible ID formats
+      return (
+        loc.characterId === characterId ||
+        loc.characterId === parseInt(characterId) ||
+        loc.characterId === String(characterId)
+      );
+    });
   };
 
   const currentLocation = getCharacterLocation(character.character_id);
